@@ -25,156 +25,211 @@
   </head>
   <body>
       <script>
-          var cache = {};
+        var cache = {};
 
-          function guid() {
-            function s4() {
-                return Math.floor((1 + Math.random()) * 0x10000)
-                .toString(16)
-                .substring(1);
+        function guid() {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+        }
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+            s4() + '-' + s4() + s4() + s4();
+        }
+
+        var mongoose = require('mongoose');
+        var events = require('events');
+        var EventEmitter = new events.EventEmitter();
+        mongoose.connect('mongodb://localhost:27017/todo');
+        var Schema = mongoose.Schema;
+        var NotesSchema = new Schema({
+            todo : {
+            type: Schema.Types.Mixed
             }
-            return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-                s4() + '-' + s4() + s4() + s4();
-          }
+        });
+        
+        var Note = mongoose.model('Note', NotesSchema);
+          
+        Note.find({}, function(err, notes){              
+            if(err){
+                console.log('Error happened');
+            } else {
+                if(notes[0]){
+                    var notesdates = Object.keys(notes[0]['todo']);
+                    for(var i = 0; i < notesdates.length; i++){
+                        console.log("i " + i + " " + notes[0]['todo'][notesdates[i]]);
+                        for(var j = 0; j < notes[0]['todo'][notesdates[i]].length; j++){
+                            cache[notes[0]['todo'][notesdates[i]][j]['noteid']] = {
+                                'title' : notes[0]['todo'][notesdates[i]][j]['title'],
+                                'description' : notes[0]['todo'][notesdates[i]][j]['description']
+                            };
+                            console.log("j " + j + " " + notes[0]['todo'][notesdates[i]][j]);  
+                            $('#todoslist').append('<a><span onclick="showDetails(this)" id=' + notes[0]['todo'][notesdates[i]][j]['noteid'] +' class="list-group-item-text"><b>' + notes[0]['todo'][notesdates[i]][j]['title'] + '</b></span></a><hr/>');                            
+                        }
+                    }
+                }
+            }
+        });     
+        
 
-          var mongoose = require('mongoose');
-          var events = require('events');
-          var EventEmitter = new events.EventEmitter();
-          mongoose.connect('mongodb://localhost:27017/todo');
-          var Schema = mongoose.Schema;
-          var NotesSchema = new Schema({
-              todo : {
-                type: Schema.Types.Mixed
-              }
-          });
-          
-          var Note = mongoose.model('Note', NotesSchema);
-          
-          var populateAll = function(){
-            Note.find({}, function(err, notes){              
+        function deleteNote(notefullid){
+            console.log('called delete');
+            var idSplit = notefullid.split('@');            
+            var date = idSplit[0];
+            var noteid = idSplit[1];
+            console.log('note id ' + noteid);
+            Note.find({}, function(err, notes){
                 if(err){
                     console.log('Error happened');
                 } else {
                     if(notes[0]){
+                        var ID = notes[0]['_id'];
+                        console.log('main id ' + ID);
+                        console.log('found node[0]');
                         var notesdates = Object.keys(notes[0]['todo']);
                         for(var i = 0; i < notesdates.length; i++){
-                            console.log("i " + i + " " + notes[0]['todo'][notesdates[i]]);
-                            for(var j = 0; j < notes[0]['todo'][notesdates[i]].length; j++){
-                                cache[notes[0]['todo'][notesdates[i]][j]['noteid']] = {
-                                    'title' : notes[0]['todo'][notesdates[i]][j]['title'],
-                                    'description' : notes[0]['todo'][notesdates[i]][j]['description']
-                                };
-                                console.log("j " + j + " " + notes[0]['todo'][notesdates[i]][j]);  
-                                $('#todoslist').append('<a><span onclick="showDetails(this)" id=' + notes[0]['todo'][notesdates[i]][j]['noteid'] +' class="list-group-item-text"><b>' + notes[0]['todo'][notesdates[i]][j]['title'] + '</b></span></a><hr/>');                            
+                            if(date == notesdates[i]){
+                                console.log('found date');
+                                for(var j = 0; j < notes[0]['todo'][notesdates[i]].length; j++){
+                                    console.log('db date ' + notesdates[i]);
+                                    var arr = notes[0]['todo'][notesdates[i]];
+                                    notes[0].update(
+                                        {_id : ID},
+                                        {$pull : { arr : {'noteid' : notefullid} }}
+                                    );
+                                    //notes[0]['todo'][notesdates[i]].pull({'noteid' : notefullid});
+                                    console.log('removed');
+                                }
+                                // notes[0].save(function(err){
+                                //     if(err){
+                                //         console.error('error happened');
+                                //     } else {
+                                //         console.log('trying to remove html');
+                                //         $("#todoslist").children('span').each(function(){
+                                //             var nid = $(this).id;
+                                //             console.log('nid ' + nid);
+                                //             if(nid == (notefullid)){
+                                //                 $(this).remove();                                     
+                                //             }
+                                //         });
+                                //     }
+                                // });
+                                break;
                             }
                         }
                     }
                 }
-            });     
-          };
+            });
+        }
 
-          populateAll();
+        function showDetails(ele){
+            var eleid = ele.id;            
+            console.log('ID ' + eleid);
+            $("#detailstitle").html(cache[eleid]['title']);
+            $("#detailsdescription").html(cache[eleid]['description']);           
+                        
+            $("#deleteNote").append('<button id='+ eleid +' class="btn btn-danger" style="width: 100%;" >Delete</button> <br>');
+            $("#deleteNote button").on('click', function(){
+                deleteNote(this.id);
+            });
+           // $("#editNote").append('<button class="btn btn-success" style="width: 100%;" onclick="editNote('+ eleid +')" >Edit</button>');
+        }
 
-          EventEmitter.on('updatenotes', populateAll);
+        function getTodayDate(){
+        var today = new Date();
+        var dd = today.getDate();
+        var mm = today.getMonth()+1;
+        var yyyy = today.getFullYear();
+        if(dd<10){
+            dd='0'+dd
+        } 
+        if(mm<10){
+            mm='0'+mm
+        } 
+        var today = dd+''+mm+''+yyyy;
+        return today;
+        }
 
-          function showDetails(ele){
-              var eleid = ele.id;
-              console.log('ID ' + eleid);
-              $("#detailstitle").html(cache[eleid]['title']);
-              $("#detailsdescription").html(cache[eleid]['description']);
-          }
-
-          function getTodayDate(){
-            var today = new Date();
-            var dd = today.getDate();
-            var mm = today.getMonth()+1;
-            var yyyy = today.getFullYear();
-            if(dd<10){
-                dd='0'+dd
-            } 
-            if(mm<10){
-                mm='0'+mm
-            } 
-            var today = dd+''+mm+''+yyyy;
-            return today;
-          }
-
-          // Lot of redundant code injecting bootstrap warning error handling. Anyway not going to clean up 
-          // Handle creation of new note
-          function createNewNote(){
-              console.log('called');
-              var title = $('#notetitle').val();
-              var description = $('#notedescription').val();
-              if(title && description && title != '' && description != ''){
-                var today = getTodayDate();
-                Note.find({}, function(err, notes){
-                    if(err){
-                        $("#notetitle").append('<div class="alert alert-danger alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
-                            <span aria-hidden="true">&times;</span>\
-                            </button><strong>Something went wrong.Please try again.</strong></div>');     
-                    } else {
-                        //console.log(notes[0]);
-                        var noteid = today + ')' + guid()
-                        var noteObj = {
-                                title : title,
-                                description : description,
-                                noteid :  noteid
-                        };
-                        if(notes[0] && notes[0]['todo']){
-                            console.log('here 2');
-                            if(notes[0]['todo'][today])
-                                notes[0]['todo'][today].push(noteObj);
-                            else {
-                                notes[0]['todo'][today] = [];
-                                notes[0]['todo'][today].push(noteObj);
-                            }
-                            notes[0].markModified('todo');
-                            notes[0].save(function(err){
-                                if(err){ $("#notetitle").append('<div class="alert alert-danger alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
-                                    <span aria-hidden="true">&times;</span>\
-                                    </button><strong>Something went wrong.Please try again.</strong></div>');
-                                } else {
-                                    cache[noteObj['noteid']] = {
-                                        'title' : noteObj['title'],
-                                        'description' : noteObj['description']
-                                    }
-                                    $('#todoslist').append('<a><span onclick="showDetails(this)" id=' + noteObj['noteid'] +' class="list-group-item-text"><b>' + noteObj['title'] + '</b></span></a><hr/>');
-                                    $("#notetitle").append('<div class="alert alert-success alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
-                                    <span aria-hidden="true">&times;</span>\
-                                    </button><strong>New Note Created.</strong></div>');
-                                }
-                            });
-                        } else {
-                            console.log('here');
-                            notes = new Note({'todo' : {}});
-                            notes['todo'][today] = [];
-                            notes['todo'][today].push(noteObj);
-                            notes.markModified('todo');                            
-                            notes.save(function(err){
-                                if(err){ $("#notetitle").append('<div class="alert alert-danger alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
-                                    <span aria-hidden="true">&times;</span>\
-                                    </button><strong>Something went wrong.Please try again.</strong></div>');
-                                } else{
-                                    cache[noteObj['noteid']] = {
-                                        'title' : noteObj['title'],
-                                        'description' : noteObj['description']
-                                    }
-                                    $('#todoslist').append('<a><span onclick="showDetails(this)" id=' + noteObj['noteid'] +' class="list-group-item-text"><b>' + noteObj['title'] + '</b></span></a><hr/>');
-                                    $("#notetitle").append('<div class="alert alert-success alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
-                                    <span aria-hidden="true">&times;</span>\
-                                    </button><strong>New Note Created.</strong></div>');
-                                }
-                            });
+        // Lot of redundant code injecting bootstrap warning error handling. Anyway not going to clean up 
+        // Handle creation of new note
+        function createNewNote(){
+            console.log('called');
+            var title = $('#notetitle').val();
+            var description = $('#notedescription').val();
+            if(title && description && title != '' && description != ''){
+            var today = getTodayDate();
+            Note.find({}, function(err, notes){
+                if(err){
+                    $("#notetitle").append('<div class="alert alert-danger alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
+                        <span aria-hidden="true">&times;</span>\
+                        </button><strong>Something went wrong.Please try again.</strong></div>');     
+                } else {
+                    //console.log(notes[0]);
+                    var noteid = today + '@' + guid()
+                    var noteObj = {
+                            title : title,
+                            description : description,
+                            noteid :  noteid
+                    };
+                    if(notes[0] && notes[0]['todo']){
+                        console.log('here 2');
+                        if(notes[0]['todo'][today])
+                            notes[0]['todo'][today].push(noteObj);
+                        else {
+                            notes[0]['todo'][today] = [];
+                            notes[0]['todo'][today].push(noteObj);
                         }
-                       
+                        notes[0].markModified('todo');
+                        notes[0].save(function(err){
+                            if(err){ $("#notetitle").append('<div class="alert alert-danger alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
+                                <span aria-hidden="true">&times;</span>\
+                                </button><strong>Something went wrong.Please try again.</strong></div>');
+                            } else {
+                                $('#notetitle').val('');
+                                $('#notedescription').val('');
+                                cache[noteObj['noteid']] = {
+                                    'title' : noteObj['title'],
+                                    'description' : noteObj['description']
+                                }
+                                $('#todoslist').append('<a><span onclick="showDetails(this)" id=' + noteObj['noteid'] +' class="list-group-item-text"><b>' + noteObj['title'] + '</b></span></a><hr/>');
+                                $("#notetitle").append('<div class="alert alert-success alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
+                                <span aria-hidden="true">&times;</span>\
+                                </button><strong>New Note Created.</strong></div>');
+                            }
+                        });
+                    } else {
+                        console.log('here');
+                        notes = new Note({'todo' : {}});
+                        notes['todo'][today] = [];
+                        notes['todo'][today].push(noteObj);
+                        notes.markModified('todo');                            
+                        notes.save(function(err){
+                            if(err){ $("#notetitle").append('<div class="alert alert-danger alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
+                                <span aria-hidden="true">&times;</span>\
+                                </button><strong>Something went wrong.Please try again.</strong></div>');
+                            } else{
+                                $('#notetitle').val('');
+                                $('#notedescription').val('');
+                                cache[noteObj['noteid']] = {
+                                    'title' : noteObj['title'],
+                                    'description' : noteObj['description']
+                                }
+                                $('#todoslist').append('<a><span onclick="showDetails(this)" id=' + noteObj['noteid'] +' class="list-group-item-text"><b>' + noteObj['title'] + '</b></span></a><hr/>');                                    
+                                $("#notetitle").append('<div class="alert alert-success alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
+                                <span aria-hidden="true">&times;</span>\
+                                </button><strong>New Note Created.</strong></div>');
+                            }
+                        });
                     }
-                });
-              } else {
-                   $("#notetitle").append('<div class="alert alert-danger alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
-                    <span aria-hidden="true">&times;</span>\
-                    </button><strong>Fill out all the fields.</strong></div>');
-              }
-          }   
+                    
+                }
+            });
+            } else {
+                $("#notetitle").append('<div class="alert alert-danger alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
+                <span aria-hidden="true">&times;</span>\
+                </button><strong>Fill out all the fields.</strong></div>');
+            }
+        }   
 
         //   $('#createnewnote').on('click', function(){
         //       console.log('clicked0');
@@ -218,6 +273,8 @@
                     <hr/>
                     <span class="list-group-item-text"><b>Description</b></span>
                     <p id="detailsdescription"></p>                   
+                    <div id="deleteNote"></div>
+                    <div id="editNote"></div>
                 </div>
             </div>
         </div>
