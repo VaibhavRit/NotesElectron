@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="300" height="300"  xml:space="preserve">
+    <circle id="oval" stroke="rgb(252, 56, 65)" stroke-width="5" fill="none" cx="151" cy="150" r="130.5" />
+    <rect id="rectangle" stroke="none" fill="rgb(19, 151, 241)" x="60" y="198" width="180" height="22" />
+    <rect id="rectangle2" stroke="none" fill="rgb(19, 151, 241)" x="75" y="103" width="15" height="95" />
+    <rect id="rectangle3" stroke="none" fill="rgb(19, 151, 241)" x="210" y="103" width="15" height="95" />
+    <polygon id="polygon" stroke="none" fill="rgb(19, 151, 241)" points="150,37 244.4,91.75 55.6,91.75" />
+    <rect id="rectangle4" stroke="none" fill="rgb(19, 151, 241)" x="68" y="184" width="30" height="14" />
+    <rect id="rectangle5" stroke="none" fill="rgb(19, 151, 241)" x="203" y="184" width="30" height="14" />
+    <rect id="rectangle6" stroke="none" fill="rgb(165, 223, 251)" x="105" y="103" width="15" height="95" />
+    <rect id="rectangle7" stroke="none" fill="rgb(165, 223, 251)" x="182" y="103" width="15" height="95" />
+    <path id="bezier" stroke="rgb(165, 223, 251)" stroke-width="1.5" stroke-miterlimit="10" fill="none" d="M 70,97.32 L 230,97.32" />
+    <path id="rectangle8" stroke="none" fill="rgb(165, 223, 251)" d="M 132,196 L 169,196 169,153 C 169,148.58 165.42,145 161,145 L 140,145 C 135.58,145 132,148.58 132,153 Z M 132,196" />
+    <ellipse id="oval2" stroke="none" fill="rgb(165, 223, 251)" cx="150.5" cy="73" rx="11.5" ry="11" />
+</svg>

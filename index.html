@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>    
+        <!-- Insert this line above script imports  -->
+    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+    <!-- normal script imports etc  -->
+    <script src="public/js/jquery.min.js"></script>
+
+    <!-- Insert this line after script imports -->
+    <script>if (window.module) module = window.module;</script>
+    <link rel="stylesheet" href="public/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="public/fonts/font-awesome.min.css">
+    <script src="public/js/bootstrap.min.js"></script>
+    <style>
+        body {
+                font-family: 'Ubuntu';
+                font-size: 16px;
+                line-height: 1.5;
+                color: #3a585f;
+        }
+    </style>
+  </head>
+  <body>
+      <script>
+          var cache = {};
+
+          function guid() {
+            function s4() {
+                return Math.floor((1 + Math.random()) * 0x10000)
+                .toString(16)
+                .substring(1);
+            }
+            return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+                s4() + '-' + s4() + s4() + s4();
+          }
+
+          var mongoose = require('mongoose');
+          var events = require('events');
+          mongoose.connect('mongodb://localhost:27017/todo');
+          var Schema = mongoose.Schema;
+          var NotesSchema = new Schema({
+              todo : {
+                type: Schema.Types.Mixed
+              }
+          });
+          
+          var Note = mongoose.model('Note', NotesSchema);
+          
+          function populateAll(){
+            Note.find({}, function(err, notes){              
+                if(err){
+                    console.log('Error happened');
+                } else {
+                    if(notes[0]){
+                        var notesdates = Object.keys(notes[0]['todo']);
+                        for(var i = 0; i < notesdates.length; i++){
+                            console.log("i " + i + " " + notes[0]['todo'][notesdates[i]]);
+                            for(var j = 0; j < notes[0]['todo'][notesdates[i]].length; j++){
+                                cache[notes[0]['todo'][notesdates[i]][j]['noteid']] = {
+                                    'title' : notes[0]['todo'][notesdates[i]][j]['title'],
+                                    'description' : notes[0]['todo'][notesdates[i]][j]['description']
+                                };
+                                console.log("j " + j + " " + notes[0]['todo'][notesdates[i]][j]);  
+                                $('#todoslist').append('<a><span onclick="showDetails(this)" id=' + notes[0]['todo'][notesdates[i]][j]['noteid'] +' class="list-group-item-text"><b>' + notes[0]['todo'][notesdates[i]][j]['title'] + '</b></span></a><hr/>');                            
+                            }
+                        }
+                    }
+                }
+            });     
+          }();
+
+
+          function showDetails(ele){
+              var eleid = ele.id;
+              console.log('ID ' + eleid);
+              $("#detailstitle").html(cache[eleid]['title']);
+              $("#detailsdescription").html(cache[eleid]['description']);
+          }
+
+          function getTodayDate(){
+            var today = new Date();
+            var dd = today.getDate();
+            var mm = today.getMonth()+1;
+            var yyyy = today.getFullYear();
+            if(dd<10){
+                dd='0'+dd
+            } 
+            if(mm<10){
+                mm='0'+mm
+            } 
+            var today = dd+''+mm+''+yyyy;
+            return today;
+          }
+
+          // Lot of redundant code injecting bootstrap warning error handling. Anyway not going to clean up 
+          // Handle creation of new note
+          function createNewNote(){
+              console.log('called');
+              var title = $('#notetitle').val();
+              var description = $('#notedescription').val();
+              if(title && description && title != '' && description != ''){
+                var today = getTodayDate();
+                Note.find({}, function(err, notes){
+                    if(err){
+                        $("#notetitle").append('<div class="alert alert-danger alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
+                            <span aria-hidden="true">&times;</span>\
+                            </button><strong>Something went wrong.Please try again.</strong></div>');     
+                    } else {
+                        //console.log(notes[0]);
+                        var noteid = today + ')' + guid()
+                        var noteObj = {
+                                title : title,
+                                description : description,
+                                noteid :  noteid
+                        };
+                        if(notes[0] && notes[0]['todo']){
+                            console.log('here 2');
+                            if(notes[0]['todo'][today])
+                                notes[0]['todo'][today].push(noteObj);
+                            else {
+                                notes[0]['todo'][today] = [];
+                                notes[0]['todo'][today].push(noteObj);
+                            }
+                            notes[0].markModified('todo');
+                            notes[0].save(function(err){
+                                if(err){ $("#notetitle").append('<div class="alert alert-danger alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
+                                    <span aria-hidden="true">&times;</span>\
+                                    </button><strong>Something went wrong.Please try again.</strong></div>');
+                                } else {
+                                    $("#notetitle").append('<div class="alert alert-success alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
+                                    <span aria-hidden="true">&times;</span>\
+                                    </button><strong>New Note Created.</strong></div>');
+                                }
+                            });
+                        } else {
+                            console.log('here');
+                            notes = new Note({'todo' : {}});
+                            notes['todo'][today] = [];
+                            notes['todo'][today].push(noteObj);
+                             notes.markModified('todo');
+                            notes.save(function(err){
+                                if(err){ $("#notetitle").append('<div class="alert alert-danger alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
+                                    <span aria-hidden="true">&times;</span>\
+                                    </button><strong>Something went wrong.Please try again.</strong></div>');
+                                } else{ $("#notetitle").append('<div class="alert alert-success alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
+                                    <span aria-hidden="true">&times;</span>\
+                                    </button><strong>New Note Created.</strong></div>');
+                                }
+                            });
+                        }
+                       
+                    }
+                });
+              } else {
+                   $("#notetitle").append('<div class="alert alert-danger alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
+                    <span aria-hidden="true">&times;</span>\
+                    </button><strong>Fill out all the fields.</strong></div>');
+              }
+          }   
+
+        //   $('#createnewnote').on('click', function(){
+        //       console.log('clicked0');
+        //       createNewNote();
+        //   });
+
+      </script>
+      <div class="row">
+          <div class="col-md-12">
+              <nav id="header" class="navbar navbar-default">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <div class="collapse navbar-collapse">
+                            <ul class="nav navbar-nav">
+                                <li><a href="#"><b>Your ToDo App</b></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+          </div>
+      </div>
+    <div class="row">
+        <div class="col-md-2">                
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title" align='center'>Notes</h3>
+                </div>
+                <div id="todoslist" class="panel-body">                    
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">                
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title" align='center'>Details</h3>
+                </div>
+                <div id="todosdetails" class="panel-body">
+                    <span class="list-group-item-text"><b>Title</b></span>
+                    <p id="detailstitle"></p>
+                    <hr/>
+                    <span class="list-group-item-text"><b>Description</b></span>
+                    <p id="detailsdescription"></p>                   
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">                
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title" align='center'>Create new note</h3>
+                </div>
+                <div>
+                    <div id="todosnew" class="panel-body">
+                        <div class="form-group">
+                            <label for="notetitle">Title</label>
+                            <input type="text" class="form-control" id="notetitle">                            
+                        </div>
+                        <div class="form-group">
+                            <label for="notedescription">Description</label>
+                            <textarea class="form-control" id="notedescription" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <button onclick="createNewNote()" id="createnewnote" class="btn btn-primary" align="center">New Note</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+     
+  </body>
+</html>
