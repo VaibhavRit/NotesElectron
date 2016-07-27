@@ -11,7 +11,7 @@ var window;
 
 function createWindow(){
 
-    window = new BrowserWindow({width : 800, height : 800});    
+    window = new BrowserWindow({width : 800, height : 800, title: "Notes"});    
     window.loadURL(`file://${__dirname}/index.html`);
     window.webContents.openDevTools();
     window.on('close', function() {

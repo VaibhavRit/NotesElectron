@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Hello World!</title>    
+    <title>Notes</title>    
         <!-- Insert this line above script imports  -->
     <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
 
@@ -39,6 +39,7 @@
 
           var mongoose = require('mongoose');
           var events = require('events');
+          var EventEmitter = new events.EventEmitter();
           mongoose.connect('mongodb://localhost:27017/todo');
           var Schema = mongoose.Schema;
           var NotesSchema = new Schema({
@@ -49,7 +50,7 @@
           
           var Note = mongoose.model('Note', NotesSchema);
           
-          function populateAll(){
+          var populateAll = function(){
             Note.find({}, function(err, notes){              
                 if(err){
                     console.log('Error happened');
@@ -70,8 +71,11 @@
                     }
                 }
             });     
-          }();
+          };
 
+          populateAll();
+
+          EventEmitter.on('updatenotes', populateAll);
 
           function showDetails(ele){
               var eleid = ele.id;
@@ -130,6 +134,11 @@
                                     <span aria-hidden="true">&times;</span>\
                                     </button><strong>Something went wrong.Please try again.</strong></div>');
                                 } else {
+                                    cache[noteObj['noteid']] = {
+                                        'title' : noteObj['title'],
+                                        'description' : noteObj['description']
+                                    }
+                                    $('#todoslist').append('<a><span onclick="showDetails(this)" id=' + noteObj['noteid'] +' class="list-group-item-text"><b>' + noteObj['title'] + '</b></span></a><hr/>');
                                     $("#notetitle").append('<div class="alert alert-success alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
                                     <span aria-hidden="true">&times;</span>\
                                     </button><strong>New Note Created.</strong></div>');
@@ -140,12 +149,18 @@
                             notes = new Note({'todo' : {}});
                             notes['todo'][today] = [];
                             notes['todo'][today].push(noteObj);
-                             notes.markModified('todo');
+                            notes.markModified('todo');                            
                             notes.save(function(err){
                                 if(err){ $("#notetitle").append('<div class="alert alert-danger alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
                                     <span aria-hidden="true">&times;</span>\
                                     </button><strong>Something went wrong.Please try again.</strong></div>');
-                                } else{ $("#notetitle").append('<div class="alert alert-success alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
+                                } else{
+                                    cache[noteObj['noteid']] = {
+                                        'title' : noteObj['title'],
+                                        'description' : noteObj['description']
+                                    }
+                                    $('#todoslist').append('<a><span onclick="showDetails(this)" id=' + noteObj['noteid'] +' class="list-group-item-text"><b>' + noteObj['title'] + '</b></span></a><hr/>');
+                                    $("#notetitle").append('<div class="alert alert-success alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
                                     <span aria-hidden="true">&times;</span>\
                                     </button><strong>New Note Created.</strong></div>');
                                 }
