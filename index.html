@@ -158,6 +158,10 @@
                                         if(notefullid == notes[0]['todo'][notesdates[i]][j]['noteid']){                                           
                                             notes[0]['todo'][notesdates[i]][j]['title'] = title;
                                             notes[0]['todo'][notesdates[i]][j]['description'] = description;
+                                             cache[notes[0]['todo'][notesdates[i]][j]['noteid']] = {
+                                                'title' : notes[0]['todo'][notesdates[i]][j]['title'],
+                                                'description' : notes[0]['todo'][notesdates[i]][j]['description']
+                                            };
                                             break;                                            
                                         }
                                     }
@@ -167,15 +171,16 @@
                                         if(err){
                                             console.error('error happened');
                                         } else {
-                                            console.log('trying to remove html');
-                                            $("#todoslist").children('div').each(function(){
-                                                console.log('HTML Change');
-                                                //console.log(this);
-                                                var nid = $(this).children(":first").children(":first").attr('id');
-                                                if(nid == notefullid){
-                                                    $(this).text(title);
-                                                }
-                                            });
+                                            console.log('save html');
+                                            // $("#todoslist").children('div').each(function(){
+                                            //     console.log('HTML Change');
+                                            //     //console.log(this);
+                                            //     var nid = $(this).children(":first").children(":first").attr('id');
+                                            //     if(nid == notefullid){
+                                            //         $(this).text(title);                                                    
+                                            //     }
+                                            // });
+                                            showDetails(notefull);
                                         }
                                     });
                                     break;
@@ -253,6 +258,7 @@
             console.log('called');
             var title = $('#notetitle').val();
             var description = $('#notedescription').val();
+            console.log('create note ' + description);
             if(title && description && title != '' && description != ''){
             var today = getTodayDate();
             Note.find({}, function(err, notes){
@@ -370,10 +376,10 @@
                     <hr/>
                     <span class="list-group-item-text"><b>Description</b></span>
                     <p id="detailsdescription"></p>                   
-                    <div id="deleteNote"><button onclick="deleteNote(this)" style="display:none; width:100%;" class="btn btn-danger" style="width: 100%;" >Delete</button> <br></div>
-                    <div id="editNote"><button onclick="showEditNote(this)" style="display:none; width:100%;" class="btn btn-primary" style="width: 100%;" >Edit</button> <br></div>
-                    <div id="saveNote"><button onclick="saveNote(this)" style="display:none; width:100%;" class="btn btn-success" style="width: 100%;" >Save</button> <br></div>
-                    <div id="cancelNote"><button onclick="cancelNote(this)" style="display:none; width:100%;" class="btn btn-success" style="width: 100%;" >Cancel</button> <br></div>
+                    <div id="deleteNote"><button onclick="deleteNote(this)" style="display:none; width:100%; margin-bottom:6px;" class="btn btn-danger" style="width: 100%;" >Delete</button> <br></div>
+                    <div id="editNote"><button onclick="showEditNote(this)" style="display:none; width:100%; margin-bottom:6px;" class="btn btn-primary" style="width: 100%;" >Edit</button> <br></div>
+                    <div id="saveNote"><button onclick="saveNote(this)" style="display:none; width:100%; margin-bottom:6px;" class="btn btn-success" style="width: 100%;" >Save</button> <br></div>
+                    <div id="cancelNote"><button onclick="cancelNote(this)" style="display:none; width:100%; margin-bottom:6px;" class="btn btn-info" style="width: 100%;" >Cancel</button> <br></div>
                 </div>
             </div>
         </div>
