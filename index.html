@@ -122,12 +122,12 @@
                                                 var nid = $(this).children(":first").children(":first").attr('id');
                                                 $("#detailstitle").html('');
                                                 $("#detailsdescription").html('');
-                                                $("#deleteNote button").attr('id', '');   
+                                                $("#deleteNote button").attr('id', '');  
+                                                $("#deleteNote button").hide();
                                                 if(nid == (notefullid)){
                                                     $(this).remove();                          
                                                 }
                                             });
-                                            $("#deleteNote button").hide();
                                         }
                                     });
                                     break;
@@ -205,7 +205,7 @@
                                     'title' : noteObj['title'],
                                     'description' : noteObj['description']
                                 }
-                                $('#todoslist').append('<a><span onclick="showDetails(this)" id=' + noteObj['noteid'] +' class="list-group-item-text"><b>' + noteObj['title'] + '</b></span></a><hr/>');
+                                $('#todoslist').append('<div><a><span onclick="showDetails(this)" id=' + noteObj['noteid'] +' class="list-group-item-text"><b>' + noteObj['title'] + '</b></span></a><hr/></div>');
                                 $("#notetitle").append('<div class="alert alert-success alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
                                 <span aria-hidden="true">&times;</span>\
                                 </button><strong>New Note Created.</strong></div>');
@@ -228,7 +228,7 @@
                                     'title' : noteObj['title'],
                                     'description' : noteObj['description']
                                 }
-                                $('#todoslist').append('<a><span onclick="showDetails(this)" id=' + noteObj['noteid'] +' class="list-group-item-text"><b>' + noteObj['title'] + '</b></span></a><hr/>');                                    
+                                $('#todoslist').append('<div><a><span onclick="showDetails(this)" id=' + noteObj['noteid'] +' class="list-group-item-text"><b>' + noteObj['title'] + '</b></span></a><hr/></div>');                                    
                                 $("#notetitle").append('<div class="alert alert-success alert-dismissible fade in" role="alert"> <button type="button" class="close" data-dismiss="alert" aria-label="Close">\
                                 <span aria-hidden="true">&times;</span>\
                                 </button><strong>New Note Created.</strong></div>');
