@@ -64,7 +64,7 @@
                                 'description' : notes[0]['todo'][notesdates[i]][j]['description']
                             };
                             console.log("j " + j + " " + notes[0]['todo'][notesdates[i]][j]);  
-                            $('#todoslist').append('<a><span onclick="showDetails(this)" id=' + notes[0]['todo'][notesdates[i]][j]['noteid'] +' class="list-group-item-text"><b>' + notes[0]['todo'][notesdates[i]][j]['title'] + '</b></span></a><hr/>');                            
+                            $('#todoslist').append('<div><a><span onclick="showDetails(this)" id=' + notes[0]['todo'][notesdates[i]][j]['noteid'] +' class="list-group-item-text"><b>' + notes[0]['todo'][notesdates[i]][j]['title'] + '</b></span></a><hr/><div>');                            
                         }
                     }
                 }
@@ -72,66 +72,80 @@
         });     
         
 
-        function deleteNote(notefullid){
-            console.log('called delete');
-            var idSplit = notefullid.split('@');            
-            var date = idSplit[0];
-            var noteid = idSplit[1];
-            console.log('note id ' + noteid);
-            Note.find({}, function(err, notes){
-                if(err){
-                    console.log('Error happened');
-                } else {
-                    if(notes[0]){
-                        var ID = notes[0]['_id'];
-                        console.log('main id ' + ID);
-                        console.log('found node[0]');
-                        var notesdates = Object.keys(notes[0]['todo']);
-                        for(var i = 0; i < notesdates.length; i++){
-                            if(date == notesdates[i]){
-                                console.log('found date');
-                                for(var j = 0; j < notes[0]['todo'][notesdates[i]].length; j++){
-                                    console.log('db date ' + notesdates[i]);
-                                    var arr = notes[0]['todo'][notesdates[i]];
-                                    notes[0].update(
-                                        {_id : ID},
-                                        {$pull : { arr : {'noteid' : notefullid} }}
-                                    );
-                                    //notes[0]['todo'][notesdates[i]].pull({'noteid' : notefullid});
-                                    console.log('removed');
+        function deleteNote(notefullid){            
+            notefullid = notefullid.id;
+            if(notefullid && notefullid != '' && notefullid.indexOf('@') > 0){
+                console.log('called delete ' + notefullid);
+                var idSplit = notefullid.split('@');            
+                var date = idSplit[0];
+                var noteid = idSplit[1];
+                console.log('note id ' + noteid);
+                Note.find({}, function(err, notes){
+                    if(err){
+                        console.log('Error happened');
+                    } else {
+                        if(notes[0]){
+                            var ID = notes[0]['_id'];
+                            console.log('main id ' + ID);
+                            console.log('found node[0]');
+                            var notesdates = Object.keys(notes[0]['todo']);
+                            for(var i = 0; i < notesdates.length; i++){
+                                if(date == notesdates[i]){
+                                    console.log('found date');
+                                    for(var j = 0; j < notes[0]['todo'][notesdates[i]].length; j++){
+                                        console.log('db date ' + notesdates[i]);
+                                        var arr = notes[0]['todo'][notesdates[i]];
+                                        if(notefullid == notes[0]['todo'][notesdates[i]][j]['noteid']){
+                                            // if(j == 0){
+                                            //     notes[0]['todo'][notesdates[i]].shift();
+                                            //     console.log('removed');    
+                                            // } else if(j == notes[0]['todo'][notesdates[i]].length - 1){
+                                            //     notes[0]['todo'][notesdates[i]].pop();
+                                            //     console.log('removed');
+                                            // } else {
+                                            notes[0]['todo'][notesdates[i]].splice(j, 1);
+                                            //console.log(notes[0]['todo'][notesdates[i]]);
+                                            //console.log('removed');
+                                            //}
+                                        }
+                                    }
+                                    //console.log(notes[0]);
+                                    notes[0].markModified('todo');
+                                    notes[0].save(function(err){
+                                        if(err){
+                                            console.error('error happened');
+                                        } else {
+                                            console.log('trying to remove html');
+                                            $("#todoslist").children('div').each(function(){
+                                                console.log('HTML Remove');
+                                                //console.log(this);
+                                                var nid = $(this).children(":first").children(":first").attr('id');
+                                                $("#detailstitle").html('');
+                                                $("#detailsdescription").html('');
+                                                $("#deleteNote button").attr('id', '');   
+                                                if(nid == (notefullid)){
+                                                    $(this).remove();                          
+                                                }
+                                            });
+                                            $("#deleteNote button").hide();
+                                        }
+                                    });
+                                    break;
                                 }
-                                // notes[0].save(function(err){
-                                //     if(err){
-                                //         console.error('error happened');
-                                //     } else {
-                                //         console.log('trying to remove html');
-                                //         $("#todoslist").children('span').each(function(){
-                                //             var nid = $(this).id;
-                                //             console.log('nid ' + nid);
-                                //             if(nid == (notefullid)){
-                                //                 $(this).remove();                                     
-                                //             }
-                                //         });
-                                //     }
-                                // });
-                                break;
                             }
                         }
                     }
-                }
-            });
+                });
+            }
         }
 
         function showDetails(ele){
             var eleid = ele.id;            
             console.log('ID ' + eleid);
+            $("#deleteNote button").show();
             $("#detailstitle").html(cache[eleid]['title']);
-            $("#detailsdescription").html(cache[eleid]['description']);           
-                        
-            $("#deleteNote").append('<button id='+ eleid +' class="btn btn-danger" style="width: 100%;" >Delete</button> <br>');
-            $("#deleteNote button").on('click', function(){
-                deleteNote(this.id);
-            });
+            $("#detailsdescription").html(cache[eleid]['description']);
+            $("#deleteNote button").attr('id', eleid);            
            // $("#editNote").append('<button class="btn btn-success" style="width: 100%;" onclick="editNote('+ eleid +')" >Edit</button>');
         }
 
@@ -273,7 +287,7 @@
                     <hr/>
                     <span class="list-group-item-text"><b>Description</b></span>
                     <p id="detailsdescription"></p>                   
-                    <div id="deleteNote"></div>
+                    <div id="deleteNote"><button onclick="deleteNote(this)" style="display:none" class="btn btn-danger" style="width: 100%;" >Delete</button> <br></div>
                     <div id="editNote"></div>
                 </div>
             </div>
