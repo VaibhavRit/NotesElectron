@@ -20,7 +20,8 @@
                 font-size: 16px;
                 line-height: 1.5;
                 color: #3a585f;
-        }
+                word-wrap: break-word;
+        }        
     </style>
   </head>
   <body>
@@ -95,18 +96,9 @@
                                     for(var j = 0; j < notes[0]['todo'][notesdates[i]].length; j++){
                                         console.log('db date ' + notesdates[i]);
                                         var arr = notes[0]['todo'][notesdates[i]];
-                                        if(notefullid == notes[0]['todo'][notesdates[i]][j]['noteid']){
-                                            // if(j == 0){
-                                            //     notes[0]['todo'][notesdates[i]].shift();
-                                            //     console.log('removed');    
-                                            // } else if(j == notes[0]['todo'][notesdates[i]].length - 1){
-                                            //     notes[0]['todo'][notesdates[i]].pop();
-                                            //     console.log('removed');
-                                            // } else {
+                                        if(notefullid == notes[0]['todo'][notesdates[i]][j]['noteid']){                                           
                                             notes[0]['todo'][notesdates[i]].splice(j, 1);
-                                            //console.log(notes[0]['todo'][notesdates[i]]);
-                                            //console.log('removed');
-                                            //}
+                                            break;                                            
                                         }
                                     }
                                     //console.log(notes[0]);
@@ -139,13 +131,104 @@
             }
         }
 
+        function saveNote(notefull){
+            var notefullid = $(notefull).attr('id');
+            console.log('notefullid' + notefullid);
+            if(notefullid && notefullid != '' & notefullid.indexOf('@') > 0){
+                var title = $("#detailstitle > input").val();
+                var description = $("#detailsdescription > textarea").val();
+                var splitNote = notefullid.split('@');
+                var date = splitNote[0];
+                var noteid = splitNote[1];
+                Note.find({}, function(err, notes){
+                    if(err){
+                        console.error('error save');
+                    } else {
+                        if(notes[0]){
+                            var ID = notes[0]['_id'];
+                            console.log('main id ' + ID);
+                            console.log('found node[0]');
+                            var notesdates = Object.keys(notes[0]['todo']);
+                            for(var i = 0; i < notesdates.length; i++){
+                                if(date == notesdates[i]){
+                                    console.log('found date');
+                                    for(var j = 0; j < notes[0]['todo'][notesdates[i]].length; j++){
+                                        console.log('db date ' + notesdates[i]);
+                                        var arr = notes[0]['todo'][notesdates[i]];
+                                        if(notefullid == notes[0]['todo'][notesdates[i]][j]['noteid']){                                           
+                                            notes[0]['todo'][notesdates[i]][j]['title'] = title;
+                                            notes[0]['todo'][notesdates[i]][j]['description'] = description;
+                                            break;                                            
+                                        }
+                                    }
+                                    //console.log(notes[0]);
+                                    notes[0].markModified('todo');
+                                    notes[0].save(function(err){
+                                        if(err){
+                                            console.error('error happened');
+                                        } else {
+                                            console.log('trying to remove html');
+                                            $("#todoslist").children('div').each(function(){
+                                                console.log('HTML Change');
+                                                //console.log(this);
+                                                var nid = $(this).children(":first").children(":first").attr('id');
+                                                if(nid == notefullid){
+                                                    $(this).text(title);
+                                                }
+                                            });
+                                        }
+                                    });
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                });
+            }else {
+                console.log(notefull);
+                console.error('why');
+            }
+        }
+
+        function showEditNote(notefull){
+            var notefullid = $(notefull).attr('id');
+            console.log('notefullid' + notefullid);
+            if(notefullid && notefullid != '' & notefullid.indexOf('@') > 0){
+                console.log('inside show edit');
+                $("#deleteNote button").hide();
+                $("#saveNote button").show();
+                $("#editNote button").hide();
+                $("#cancelNote button").show();
+                $("#detailsdescription").empty();
+                $("#detailstitle").empty();
+                $("#detailstitle").append('<input type="text" id="editDescription" class="form-control"></input>');
+                $("#detailstitle > input").val(cache[notefullid]['title']);                
+                $("#detailsdescription").append('<textarea class="form-control" id="notedescription" rows="3"></textarea>');                
+                $("#detailsdescription > textarea").val(cache[notefullid]['description']);
+            } else {
+                console.log(notefull);
+                console.error('why');
+            }
+        }
+
+        function cancelNote(ele){
+            $(ele).hide();
+            showDetails(ele);
+        }
+
         function showDetails(ele){
-            var eleid = ele.id;            
+            var eleid = ele.id;
             console.log('ID ' + eleid);
+            $("#saveNote button").hide();
             $("#deleteNote button").show();
+            $("#editNote button").show();
+            $("#cancelNote button").hide();
             $("#detailstitle").html(cache[eleid]['title']);
             $("#detailsdescription").html(cache[eleid]['description']);
-            $("#deleteNote button").attr('id', eleid);            
+            $("#deleteNote button").attr('id', eleid);
+            $("#editNote button").attr('id', eleid);
+            $("#saveNote button").attr('id', eleid);
+            $("#cancelNote button").attr('id', eleid);     
            // $("#editNote").append('<button class="btn btn-success" style="width: 100%;" onclick="editNote('+ eleid +')" >Edit</button>');
         }
 
@@ -287,8 +370,10 @@
                     <hr/>
                     <span class="list-group-item-text"><b>Description</b></span>
                     <p id="detailsdescription"></p>                   
-                    <div id="deleteNote"><button onclick="deleteNote(this)" style="display:none" class="btn btn-danger" style="width: 100%;" >Delete</button> <br></div>
-                    <div id="editNote"></div>
+                    <div id="deleteNote"><button onclick="deleteNote(this)" style="display:none; width:100%;" class="btn btn-danger" style="width: 100%;" >Delete</button> <br></div>
+                    <div id="editNote"><button onclick="showEditNote(this)" style="display:none; width:100%;" class="btn btn-primary" style="width: 100%;" >Edit</button> <br></div>
+                    <div id="saveNote"><button onclick="saveNote(this)" style="display:none; width:100%;" class="btn btn-success" style="width: 100%;" >Save</button> <br></div>
+                    <div id="cancelNote"><button onclick="cancelNote(this)" style="display:none; width:100%;" class="btn btn-success" style="width: 100%;" >Cancel</button> <br></div>
                 </div>
             </div>
         </div>
@@ -308,7 +393,7 @@
                             <textarea class="form-control" id="notedescription" rows="3"></textarea>
                         </div>
                         <div class="form-group">
-                            <button onclick="createNewNote()" id="createnewnote" class="btn btn-primary" align="center">New Note</button>
+                            <button onclick="createNewNote()" id="createnewnote" class="btn btn-primary" style="width : 100%;" align="center">New Note</button>
                         </div>
                     </div>
                 </div>
