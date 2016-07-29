@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Notes</title>    
+    <title>NinjaNotes</title>    
         <!-- Insert this line above script imports  -->
     <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
 
@@ -21,7 +21,20 @@
                 line-height: 1.5;
                 color: #3a585f;
                 word-wrap: break-word;
-        }        
+        }   
+        .footer {
+            /*position: absolute;*/
+            bottom: 0;
+            width: 100%;
+            /* Set the fixed height of the footer here */
+            height: 60px;
+            background-color: #252525;
+            box-shadow: 0px 500px 0px 500px #252525;
+        }
+        /*.footer > .container {
+            padding-right: 15px;
+            padding-left: 15px;
+        } */
     </style>
   </head>
   <body>
@@ -65,7 +78,7 @@
                                 'description' : notes[0]['todo'][notesdates[i]][j]['description']
                             };
                             console.log("j " + j + " " + notes[0]['todo'][notesdates[i]][j]);  
-                            $('#todoslist').append('<div><a><span onclick="showDetails(this)" id=' + notes[0]['todo'][notesdates[i]][j]['noteid'] +' class="list-group-item-text"><b>' + notes[0]['todo'][notesdates[i]][j]['title'] + '</b></span></a><hr/><div>');                            
+                            $('#todoslist').append('<div><a><span align="center" onclick="showDetails(this)" id=' + notes[0]['todo'][notesdates[i]][j]['noteid'] +' class="list-group-item-text"><b>' + notes[0]['todo'][notesdates[i]][j]['title'] + '</b></span></a><hr/><div>');                            
                         }
                     }
                 }
@@ -136,59 +149,62 @@
             console.log('notefullid' + notefullid);
             if(notefullid && notefullid != '' & notefullid.indexOf('@') > 0){
                 var title = $("#detailstitle > input").val();
-                var description = $("#detailsdescription > textarea").val();
-                var splitNote = notefullid.split('@');
-                var date = splitNote[0];
-                var noteid = splitNote[1];
-                Note.find({}, function(err, notes){
-                    if(err){
-                        console.error('error save');
-                    } else {
-                        if(notes[0]){
-                            var ID = notes[0]['_id'];
-                            console.log('main id ' + ID);
-                            console.log('found node[0]');
-                            var notesdates = Object.keys(notes[0]['todo']);
-                            for(var i = 0; i < notesdates.length; i++){
-                                if(date == notesdates[i]){
-                                    console.log('found date');
-                                    for(var j = 0; j < notes[0]['todo'][notesdates[i]].length; j++){
-                                        console.log('db date ' + notesdates[i]);
-                                        var arr = notes[0]['todo'][notesdates[i]];
-                                        if(notefullid == notes[0]['todo'][notesdates[i]][j]['noteid']){                                           
-                                            notes[0]['todo'][notesdates[i]][j]['title'] = title;
-                                            notes[0]['todo'][notesdates[i]][j]['description'] = description;
-                                             cache[notes[0]['todo'][notesdates[i]][j]['noteid']] = {
-                                                'title' : notes[0]['todo'][notesdates[i]][j]['title'],
-                                                'description' : notes[0]['todo'][notesdates[i]][j]['description']
-                                            };
-                                            break;                                            
+                if(title != ''){
+                    var description = $("#detailsdescription > textarea").val();
+                    var splitNote = notefullid.split('@');
+                    var date = splitNote[0];
+                    var noteid = splitNote[1];
+                    Note.find({}, function(err, notes){
+                        if(err){
+                            console.error('error save');
+                        } else {
+                            if(notes[0]){
+                                var ID = notes[0]['_id'];
+                                console.log('main id ' + ID);
+                                console.log('found node[0]');
+                                var notesdates = Object.keys(notes[0]['todo']);
+                                for(var i = 0; i < notesdates.length; i++){
+                                    if(date == notesdates[i]){
+                                        console.log('found date');
+                                        for(var j = 0; j < notes[0]['todo'][notesdates[i]].length; j++){
+                                            console.log('db date ' + notesdates[i]);
+                                            var arr = notes[0]['todo'][notesdates[i]];
+                                            if(notefullid == notes[0]['todo'][notesdates[i]][j]['noteid']){                                           
+                                                notes[0]['todo'][notesdates[i]][j]['title'] = title;
+                                                notes[0]['todo'][notesdates[i]][j]['description'] = description;
+                                                cache[notes[0]['todo'][notesdates[i]][j]['noteid']] = {
+                                                    'title' : notes[0]['todo'][notesdates[i]][j]['title'],
+                                                    'description' : notes[0]['todo'][notesdates[i]][j]['description']
+                                                };
+                                                break;                                            
+                                            }
                                         }
+                                        //console.log(notes[0]);
+                                        notes[0].markModified('todo');
+                                        notes[0].save(function(err){
+                                            if(err){
+                                                console.error('error happened');
+                                            } else {
+                                                console.log('save html');
+                                                $("#todoslist").children('div').each(function(){
+                                                    console.log('HTML Change');
+                                                    //console.log(this);
+                                                    var childNode = $(this).children(":first").children(":first");
+                                                    var nid = childNode.attr('id');
+                                                    if(nid == notefullid){
+                                                        $(childNode).html("<b>" + title + "</b>");                
+                                                    }
+                                                });
+                                                showDetails(notefull);
+                                            }
+                                        });
+                                        break;
                                     }
-                                    //console.log(notes[0]);
-                                    notes[0].markModified('todo');
-                                    notes[0].save(function(err){
-                                        if(err){
-                                            console.error('error happened');
-                                        } else {
-                                            console.log('save html');
-                                            // $("#todoslist").children('div').each(function(){
-                                            //     console.log('HTML Change');
-                                            //     //console.log(this);
-                                            //     var nid = $(this).children(":first").children(":first").attr('id');
-                                            //     if(nid == notefullid){
-                                            //         $(this).text(title);                                                    
-                                            //     }
-                                            // });
-                                            showDetails(notefull);
-                                        }
-                                    });
-                                    break;
                                 }
                             }
                         }
-                    }
-                });
+                    });
+                }
             }else {
                 console.log(notefull);
                 console.error('why');
@@ -207,8 +223,10 @@
                 $("#detailsdescription").empty();
                 $("#detailstitle").empty();
                 $("#detailstitle").append('<input type="text" id="editDescription" class="form-control"></input>');
+                console.log(cache[notefullid]['title']);
                 $("#detailstitle > input").val(cache[notefullid]['title']);                
-                $("#detailsdescription").append('<textarea class="form-control" id="notedescription" rows="3"></textarea>');                
+                $("#detailsdescription").append('<textarea class="form-control" id="notedescription" rows="3"></textarea>');
+                console.log(cache[notefullid]['description']);
                 $("#detailsdescription > textarea").val(cache[notefullid]['description']);
             } else {
                 console.log(notefull);
@@ -228,7 +246,9 @@
             $("#deleteNote button").show();
             $("#editNote button").show();
             $("#cancelNote button").hide();
+            console.log(cache[eleid]['title']);
             $("#detailstitle").html(cache[eleid]['title']);
+            console.log(cache[eleid]['description']);
             $("#detailsdescription").html(cache[eleid]['description']);
             $("#deleteNote button").attr('id', eleid);
             $("#editNote button").attr('id', eleid);
@@ -259,7 +279,7 @@
             var title = $('#notetitle').val();
             var description = $('#notedescription').val();
             console.log('create note ' + description);
-            if(title && description && title != '' && description != ''){
+            if(title && title != ''){
             var today = getTodayDate();
             Note.find({}, function(err, notes){
                 if(err){
@@ -340,44 +360,47 @@
         //   });
 
       </script>
-      <div class="row">
-          <div class="col-md-12">
-              <nav id="header" class="navbar navbar-default">
-                <div class="container-fluid">
-                    <div class="navbar-header">
-                        <div class="collapse navbar-collapse">
-                            <ul class="nav navbar-nav">
-                                <li><a href="#"><b>Your ToDo App</b></a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-          </div>
-      </div>
-    <div class="row">
-        <div class="col-md-2">                
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title" align='center'>Notes</h3>
-                </div>
-                <div id="todoslist" class="panel-body">                    
+      
+      <nav id="header" class="navbar navbar-inverse" style="border-radius:0px; margin-bottom:0px;">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <div class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav">
+                        <li><a href="#"><b>NinjaNotes</b></a></li>
+                    </ul>
                 </div>
             </div>
         </div>
-        <div class="col-md-5">                
+    </nav>
+
+    <div class="jumbotron" style="margin-top:0px;">
+        <img  class="img-responsive center-block" src="public/img/ninja.gif">
+        <h2 align="center">Be an efficient ninja</h2>
+    </div>
+    <div class="container" style="width:100%">
+    <div class="row">
+        <div class="col-md-2">                
             <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title" align='center'>Details</h3>
+                <div class="panel-heading" style="color: #fff;background-color: #5d963f;">
+                    <h3 class="panel-title" align='center'>Notes</h3>
+                </div>
+                <div id="todoslist" class="panel-body" style="height:400px;overflow-y:auto;text-align:center;">                    
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="panel panel-default">
+                <div class="panel-heading" style="color: #fff;background-color: #5d963f;">
+                    <h3 class="panel-title" align='center' >Details</h3>
                 </div>
                 <div id="todosdetails" class="panel-body">
                     <span class="list-group-item-text"><b>Title</b></span>
                     <p id="detailstitle"></p>
                     <hr/>
                     <span class="list-group-item-text"><b>Description</b></span>
-                    <p id="detailsdescription"></p>                   
-                    <div id="deleteNote"><button onclick="deleteNote(this)" style="display:none; width:100%; margin-bottom:6px;" class="btn btn-danger" style="width: 100%;" >Delete</button> <br></div>
-                    <div id="editNote"><button onclick="showEditNote(this)" style="display:none; width:100%; margin-bottom:6px;" class="btn btn-primary" style="width: 100%;" >Edit</button> <br></div>
+                    <p id="detailsdescription"></p>
+                    <div id="editNote"><button onclick="showEditNote(this)" style="display:none; width:100%; margin-bottom:6px; margin-top:6px;" class="btn btn-primary" style="width: 100%;" >Edit</button> <br></div>
+                    <div id="deleteNote"><button onclick="deleteNote(this)" style="display:none; width:100%; margin-bottom:6px;" class="btn btn-danger" style="width: 100%;" >Delete</button> <br></div>                    
                     <div id="saveNote"><button onclick="saveNote(this)" style="display:none; width:100%; margin-bottom:6px;" class="btn btn-success" style="width: 100%;" >Save</button> <br></div>
                     <div id="cancelNote"><button onclick="cancelNote(this)" style="display:none; width:100%; margin-bottom:6px;" class="btn btn-info" style="width: 100%;" >Cancel</button> <br></div>
                 </div>
@@ -385,7 +408,7 @@
         </div>
         <div class="col-md-5">                
             <div class="panel panel-default">
-                <div class="panel-heading">
+                <div class="panel-heading" style="color: #fff;background-color: #5d963f;">
                     <h3 class="panel-title" align='center'>Create new note</h3>
                 </div>
                 <div>
@@ -405,7 +428,13 @@
                 </div>
             </div>
         </div>
-    </div>    
-     
+    </div> 
+    </div>   
+     <footer class="footer">
+      <div class="container" style="text-align:center">
+          
+        <p class="text-muted"><h2>Be a good ninja<h2></p>
+      </div>
+    </footer>
   </body>
 </html>
